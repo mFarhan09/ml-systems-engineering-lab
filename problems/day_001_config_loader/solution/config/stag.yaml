@@ -1,0 +1,4 @@
+DB: stag_database
+user: stag_user
+password: stag_password
+host: stag_host

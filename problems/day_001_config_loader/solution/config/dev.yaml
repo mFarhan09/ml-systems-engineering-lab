@@ -1,0 +1,9 @@
+db:
+  DB: "developmentDB"
+  TableName: "developerTable"
+  Password: "deveoper123"
+  Timeout: 25
+
+api:
+  apikey: "deveoperAPI"
+  apiendpoint: "deveoperEndPoint"

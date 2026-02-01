@@ -1,0 +1,5 @@
+DB: prod_database
+user: prod_user
+password: prod_password
+host: prod_host
+timeout: 60
