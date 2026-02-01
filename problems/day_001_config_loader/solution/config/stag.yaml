@@ -1,4 +1,5 @@
-DB: stag_database
-user: stag_user
-password: stag_password
-host: stag_host
+db:
+  DB: stag_database
+  TableName: stag_table
+  Password: stag_password
+  Timeout: 25
