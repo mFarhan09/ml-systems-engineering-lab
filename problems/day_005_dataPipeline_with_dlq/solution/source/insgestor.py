@@ -23,14 +23,14 @@ def readcsv(filepath:str)->Generator[tuple[int,str],None,None]:
 
         try:
             field = parsecsv(line, linenumber)
-            record = validatecsv(field)
-            yield record
+            record = validatecsv(field,linenumber)
+            yield record,linenumber
             
         except (CsvParseError,CsvValidationError) as error:
             yield{
-                "line : " : linenumber,
-                "error : ": str(error),
-                "raw : " : line
+                "line" : linenumber,
+                "error": str(error),
+                "raw" : line
             }
 
 

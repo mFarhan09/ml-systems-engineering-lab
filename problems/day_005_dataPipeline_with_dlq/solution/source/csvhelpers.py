@@ -21,8 +21,8 @@ def readline(filepath:str) -> Generator[tuple[int,str],None,None]:
     logger.info(f"[reading {filepath} line by line...]")
 
     with open(filepath,"r", encoding="utf-8") as file:
-        for linenumber , line in enumerate(file):
-            yield linenumber,line.rstrip()
+        for linenumber , line in enumerate(file,start=1):
+            yield linenumber,line.rstrip("\n")
 
 
 
@@ -61,7 +61,45 @@ def parsecsv(line:str, lineNumber: int) -> list[str]:
 
 
 #validate that field
-def validatecsv(field: list):
-    print("validatecsv")
+def validatecsv(field: list, linenumber: int) -> Dict:
+
+    if len(field !=3):
+        raise CsvValidationError(
+            f"length of string must be 3 , we got {len(field)}"
+        )
+    
+
+    name,age,city = field
+
+    name = name.strip()
+    if not name:
+        raise CsvValidationError(
+            f"line Number : {linenumber} , name is missing"
+        )
+    
+
+    age = age.strip()
+    if age == "":
+        age = None
+    else:
+        try:
+            age = int(age)
+        except ValueError as e:
+            raise CsvValidationError(
+                f"line number : {linenumber} , invalid age ,expected type int , got {type(age)}"
+            )
+        
+    city = city.strip()
+    if city == "" :
+        city = None
+        
+
+    record = {
+            "name" : name,
+            "age"  :  age,
+            "city" : city
+        }
+    
+    return record
 
 
