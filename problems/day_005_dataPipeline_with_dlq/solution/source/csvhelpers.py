@@ -1,80 +1,83 @@
-from typing import Dict,List, Any,Generator
 import logging
-from logger import setupLogger
+from typing import Dict, Tuple, Generator
 
 
-#initializing logger
-setupLogger()
+#setup logger
 logger = logging.getLogger(__name__)
 
 
-#custom exceptions for csv
-class CsvParseError(Exception):
+
+#custom exceptions 
+class ValidateCSVError(Exception):
     pass
 
-class CsvValidationError(Exception):
+class ParseCSVError(Exception):
     pass
 
 
-#read lines
-def readline(filepath:str) -> Generator[tuple[int,str],None,None]:  
-    logger.info(f"[reading {filepath} line by line...]")
+#read csv line by line
 
-    with open(filepath,"r", encoding="utf-8") as file:
-        for linenumber , line in enumerate(file,start=1):
+def readlines(filepath: str) ->Generator[Tuple[int,str],None,None]:
+    
+    logger.info(f"Reading file : {filepath} line by line...")
+    
+    with open(filepath, "r") as file:
+        for linenumber ,line in enumerate(file, start= 1):
             yield linenumber,line.rstrip("\n")
 
 
+#parse csv
+def parseCSV(line: str , linenumber: int)-> list[str]:
 
-
-#parse csv one line at a time
-def parsecsv(line:str, lineNumber: int) -> list[str]:
-
-    final = []
     current = []
-    Inqoute=  False
+    final = []
+    inqoute = False
 
-    i=0
-    while i < len(line):
+
+    i =  0
+    while (i < len(line)):
         char = line[i]
 
 
-        if char == '"': 
-            if Inqoute and i+1 < len(line) and line[i+1] == '"':
+
+        if char == '"':
+            if inqoute and i+1 < len(line) and line[i+1] == '"':
                 current.append('"')
-                i+=1
+                i += 1 
             else:
-                Inqoute = not Inqoute
-        elif char == ',' and not Inqoute:
+                inqoute = not inqoute
+
+        elif char == ',' and not inqoute:
             final.append("".join(current))
             current = []
+
         else:
             current.append(char)
 
-        i+=1
-     #end of line
-    if Inqoute:
-        raise CsvParseError(f"line : {lineNumber}  qoute mismatched")
+        i+=1 
+        #end of line
+    if inqoute:
+        raise ParseCSVError(f" line : {linenumber} : qoute mismatched ")
     
     final.append("".join(current))
     return final
 
 
-#validate that field
-def validatecsv(field: list, linenumber: int) -> Dict:
 
-    if len(field !=3):
-        raise CsvValidationError(
-            f"length of string must be 3 , we got {len(field)}"
-        )
+
+#validate csv 
+def validatecsv(field: list , linenumber: int) -> Dict:
+
+    if len(field)!=3:
+     raise ValidateCSVError (f" minimum fields required : 3, got: {len(field)}")
     
 
     name,age,city = field
 
     name = name.strip()
     if not name:
-        raise CsvValidationError(
-            f"line Number : {linenumber} , name is missing"
+        raise ValidateCSVError(
+            f"line number : {linenumber}  : name is missing"
         )
     
 
@@ -85,21 +88,22 @@ def validatecsv(field: list, linenumber: int) -> Dict:
         try:
             age = int(age)
         except ValueError as e:
-            raise CsvValidationError(
-                f"line number : {linenumber} , invalid age ,expected type int , got {type(age)}"
+            raise ValidateCSVError(
+                f"line number : {linenumber} , invalid age : expected age type (int) , got({type(age)})"
             )
         
+
     city = city.strip()
-    if city == "" :
+    if city == "":
         city = None
-        
+
 
     record = {
-            "name" : name,
-            "age"  :  age,
-            "city" : city
-        }
-    
+        "name": name,
+        "age" : age,
+        "city" : city
+    }
+
     return record
 
 

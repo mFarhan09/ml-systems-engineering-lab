@@ -3,26 +3,23 @@ import logging
 
 
 def setupLogger():
-
-    #set formatter
-    formatter = logging.Formatter("%(asctime)s  | %(name)s |%(levelname)s | %(message)s")
-
+    #setup formatter
+    formatter = logging.Formatter("%(asctime)s |  %(levelname)s | %(name)s | %(message)s")
 
     #console handler
-    consolehandler = logging.StreamHandler()
-    consolehandler.setLevel(logging.DEBUG)
-    consolehandler.setFormatter(formatter)
+    consoleHanlder = logging.StreamHandler()
+    consoleHanlder.setFormatter(formatter)
+    consoleHanlder.setLevel(logging.DEBUG)
 
-    #file handler
-    filehandler = logging.FileHandler("app.log")
-    filehandler.setLevel(logging.INFO)
-    consolehandler.setFormatter(formatter)
+    #File handler
+    fileHandler = logging.FileHandler("logs.app")
+    fileHandler.setFormatter(formatter)
+    fileHandler.setLevel(logging.INFO)
 
-    #root logger
-    rootlogger = logging.getLogger()
-    rootlogger.setLevel(logging.DEBUG)
+    #root handler
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(logging.DEBUG)
 
-    #add handlers 
-    rootlogger.addHandler(consolehandler)
-    rootlogger.addHandler(filehandler)
-
+    #attach handlers
+    rootLogger.addHandler(consoleHanlder)
+    rootLogger.addHandler(fileHandler)
