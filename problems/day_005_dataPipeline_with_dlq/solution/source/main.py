@@ -29,5 +29,7 @@ if __name__ == "__main__":
     stats = process(
         inputcsv="input.csv",
         outputjson="output/results.jsonl",
-        dlqfile="pipeline/failed.jsonl"
+        dlqfile="pipeline/failed.jsonl",
+        checkpointfile="pipeline/checkpoint.json",
+        resume=True
     )

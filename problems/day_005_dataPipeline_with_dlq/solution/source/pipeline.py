@@ -6,7 +6,9 @@ from dlq import DeadLetter, DeadLetterQueue
 from write import WriteError, WriteJson
 from transform import transform,TransformError
 from ingestor import readcsv
+from checkpoint import Checkpoint
 from datetime import datetime,UTC
+
 
 
 
@@ -45,19 +47,31 @@ Errors : {dict(self.errors)}
 
 
 #entire pipleine process
-def process(inputcsv,outputjson,dlqfile):
+def process(inputcsv,outputjson,dlqfile,checkpointfile,resume=True):
 
     #delclare variables
     dlq = DeadLetterQueue(dlqfile)
     writer = WriteJson(outputjson)
+    checkpoint = Checkpoint(checkpointfile,interval=25)
     stats = piplelineStats()
-      
-    #clear output json file
-    writer.clear()
+
+    skiplines = 0
+    if resume: 
+         lastline = checkpoint.load()
+         if lastline:
+              skiplines = lastline
+         else:
+              writer.clear()
+    else:
+         checkpoint.clear()
+         writer.clear()
 
     logger.info ("Startig Pipleine......")
 
     for linenum , record in readcsv(inputcsv):
+
+        if linenum <= skiplines:
+             continue
 
         if "error" in record:
             deadletter = DeadLetter(
@@ -70,7 +84,12 @@ def process(inputcsv,outputjson,dlqfile):
             )
             dlq.write(deadletter)
             stats.recordfailure("ValidationError")
-            logger.error(f"[FAILED] :  cannot validate : {linenum}  , Error : {record.get("error")}")
+            logger.error(f"[FAILED] :  cannot validate  {linenum}  , Error : {record.get('error')}")
+
+            if stats.total % checkpoint.interval == 0:
+                 checkpoint.save(linenum,stats)
+                 logger.info(f" {linenum} records processed successfully")
+
             continue
 
         try:
@@ -78,6 +97,11 @@ def process(inputcsv,outputjson,dlqfile):
             writer.write(transformed)
             stats.recordsuccess()
             logger.info(f"[SUCCESS] : record for {linenum} succesfully written to {outputjson}")
+
+            
+            if stats.total % checkpoint.interval == 0:
+                 checkpoint.save(linenum,stats)
+                 logger.info(f" {linenum} records processed successfully")
 
         except TransformError as e : 
                 deadletter = DeadLetter(
@@ -91,6 +115,11 @@ def process(inputcsv,outputjson,dlqfile):
                 dlq.write(deadletter)
                 stats.recordfailure("TransformError")
                 logger.error(f"[FAILED]  transforming {linenum}  . Error : {e}")
+
+                
+                if stats.total % checkpoint.interval == 0:
+                    checkpoint.save(linenum,stats)
+                    logger.info(f" {linenum} records processed successfully")
         
         except WriteError as e:
                 deadletter = DeadLetter(
@@ -105,6 +134,15 @@ def process(inputcsv,outputjson,dlqfile):
                 stats.recordfailure("WriteError")
                 logger.error(f"[FAILED] : writing {linenum} . Error : {e} ")
 
+                
+                if stats.total % checkpoint.interval == 0:
+                    checkpoint.save(linenum,stats)
+                    logger.info(f" {linenum} records processed successfully")
+
+
+    checkpoint.save(linenum,stats)
+    if stats.failed == 0:
+         checkpoint.clear()
 
     logger.info("Pipeline Complete")    
     logger.info(stats.summary())   

@@ -1,7 +1,7 @@
 import logging
 import json
 from datetime import datetime, UTC
-from dataclasses import dataclass
+from dataclasses import dataclass,asdict
 from pathlib import Path
 
 
@@ -32,9 +32,12 @@ class DeadLetterQueue:
 
     #write deadletter
     def write(self,deadLetter):
+        logger.info("DLQ WRITE TRIGGERED:%s", deadLetter)   
         try:
             with self.path.open("a") as f:
+                json.dump(asdict(deadLetter),f)
                 f.write("\n")
+                logger.info(f"failed record written to {self.path}")
 
             self.failurecount +=1
         except Exception as e:
@@ -47,7 +50,7 @@ class DeadLetterQueue:
         deadletters = []
 
         #check for path
-        if self.path.exists():
+        if not self.path.exists():
             return deadletters
         
         with self.path.open("r") as f:
